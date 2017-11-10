@@ -27,6 +27,7 @@ pip install --editable .
 ### `eradicator.aws.ecr`
 
 * `repository(repo_name, force=False, region='us-east-1')`
+* `images(repo_name, image_ids='all', account=None, region='us-east-1')`
 
 ### `eradicator.aws.ecs`
 
