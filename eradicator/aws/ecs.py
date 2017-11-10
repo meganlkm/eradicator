@@ -4,31 +4,20 @@ from eradicator.aws.cloudformation import stack
 from eradicator.settings import LOGGER
 
 
-def __get_container_instances(cluster_name, client):
-    paginator = client.get_paginator('list_container_instances')
+def __get_things(paginator, key, cluster_name, client):
+    paginator = client.get_paginator(paginator)
     response_iterator = paginator.paginate(
         cluster=cluster_name
     )
-    instances = []
+    things = []
     for thing in response_iterator:
-        instances.extend(thing['containerInstanceArns'])
-    return instances
-
-
-def __get_tasks(cluster_name, client):
-    paginator = client.get_paginator('list_tasks')
-    response_iterator = paginator.paginate(
-        cluster=cluster_name
-    )
-    tasks = []
-    for thing in response_iterator:
-        tasks.extend(thing['taskArns'])
-    return tasks
+        things.extend(thing[key])
+    return things
 
 
 @boto_client('ecs')
 def kill_tasks(cluster_name, reason=None, region=None, client=None):
-    tasks = __get_tasks(cluster_name, client)
+    tasks = __get_things('list_tasks', 'taskArns', cluster_name, client)
     LOGGER.info(tasks)
 
     kwargs = {'cluster': cluster_name}
@@ -41,13 +30,25 @@ def kill_tasks(cluster_name, reason=None, region=None, client=None):
 
 
 @boto_client('ecs')
+def services(cluster_name, region=None, client=None):
+    services = __get_things('list_services', 'serviceArns', cluster_name, client)
+    LOGGER.info(services)
+
+    for svc in services:
+        kwargs = {'cluster': cluster_name, 'service': svc}
+        client.update_service(desiredCount=0, **kwargs)
+        response = client.delete_service(**kwargs)
+        LOGGER.info(response)
+
+
+@boto_client('ecs')
 def cluster(cluster_name, stack_name=None, region=None, client=None):
     kill_tasks(cluster_name, 'deleting cluster: {}'.format(cluster_name), region=region)
 
     if stack_name:
         stack(stack_name, region=region)
     else:
-        instances = __get_container_instances(cluster_name, client)
+        instances = __get_things('list_container_instances', 'containerInstanceArns', cluster_name, client)
         LOGGER.info(instances)
         for ci in instances:
             response = client.deregister_container_instance(
@@ -55,7 +56,8 @@ def cluster(cluster_name, stack_name=None, region=None, client=None):
                 containerInstance=ci
             )
             LOGGER.info(response)
+        # what else....
 
-        # response = client.delete_cluster(
-        #     cluster='string'
-        # )
+    services(cluster_name, region=region)
+    response = client.delete_cluster(cluster=cluster_name)
+    LOGGER.info(response)
