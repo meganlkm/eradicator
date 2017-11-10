@@ -24,6 +24,10 @@ pip install --editable .
 
 * `stack(stack_name, region='us-east-1')`
 
+### `eradicator.aws.ecr`
+
+* `repository(repo_name, force=False, region='us-east-1')`
+
 ### `eradicator.aws.ecs`
 
 * `kill_tasks(cluster_name, reason=None, region='us-east-1')`
