@@ -35,6 +35,13 @@ pip install --editable .
 * `services(cluster_name, region='us-east-1')`
 * `cluster(cluster_name, stack_name=None, region='us-east-1')`
 
+### `eradicator.aws.lambdas`
+
+* `eradicate(function_name, region='us-east-1')`
+* `aliases(function_name, region='us-east-1')`
+* `versions(function_name, region='us-east-1')`
+* `function(function_name, qualifier=None, region='us-east-1')`
+
 ### `eradicator.aws.s3`
 
 * `bucket(bucket_name, force=False, region='us-east-1')`
